@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
 app.config['CELERY_RESULT_BACKEND'] = 'redis://localhosrt:6379/0'
-celery = Celery(app.name, broker=app.config['CELERTY_BROKER_URL'])
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 UPLOAD_FOLDER = "uploads"
@@ -15,7 +15,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
 @celery.task
-def process_docx(file_path, out_path)
+def process_docx(file_path, out_path):
     #here is where Tony will make the magic happen
     #
     # Get It!
@@ -56,3 +56,6 @@ def download(task_id):
           return send_file(task.result, as_attachment=True)
      return "Not ready", 404
 ###Maybe have this trigger the delete file after the download is finished...
+
+if __name__=="__main__": 
+     app.run(host='0.0.0.0', port=3000, debug=True)
