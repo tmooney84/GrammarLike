@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload DOCX for Grammar Fix</title>
+</head>
+<body>
+  <h2>Upload your .docx file</h2>
+  <input type="file" id="fileInput" />
+  <button onclick="uploadFile()">Upload</button>
+
+  <p id="status"></p>
+  <a id="downloadLink" style="display:none;">Download Processed File</a>
+
+  <script>
+    let taskId = null;
+
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      if (fileInput.files.length === 0) {
+        alert("Please select a file first");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      // Upload file
+      const res = await fetch("/upload", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      taskId = data.task_id;
+
+      document.getElementById("status").innerText = "Processing...";
+      checkStatus();
+    }
+
+    async function checkStatus() {
+      const res = await fetch(`/status/${taskId}`);
+      const data = await res.json();
+
+      if (data.status === "done") {
+        document.getElementById("status").innerText = "Complete!";
+        const downloadLink = document.getElementById("downloadLink");
+        downloadLink.href = data.download_url;
+        downloadLink.innerText = "Download Processed DOCX";
+        downloadLink.style.display = "block";
+      } else {
+        document.getElementById("status").innerText = "Status: " + data.status;
+        setTimeout(checkStatus, 2000); // poll again in 2s
+      }
+    }
+  </script>
+</body>
+</html>
