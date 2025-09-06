@@ -55,3 +55,4 @@ def download(task_id):
      if task.state == "SUCCESS":
           return send_file(task.result, as_attachment=True)
      return "Not ready", 404
+###Maybe have this trigger the delete file after the download is finished...
