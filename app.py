@@ -1,11 +1,11 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, render_template
 from celery import Celery
 import os
 
 app = Flask(__name__)
 
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhosrt:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
@@ -20,12 +20,21 @@ def process_docx(file_path, out_path):
     #
     # Get It!
     #
-    #read and write placehoder
+    # chunking to into proofread.sh and append to output file each time
+    #      chunking using an nlp-based library to find end of sentence that is close to 400kb and put into
+    #           chunk1
+    #                                                       chunk1 vvv
+    #      llm_string = print(subprocess.run(["echo", chunk1], 
+    #               capture_output=True))  
+    # 
+    #   output_string += llm_string 
+    #   f.write(output_string) 
+    #read and write placeholder
     with open(file_path, "rb") as f:
         content = f.read()
     with open(output_path, "wb") as f:
         f.write(content)
-    return output_path ### 'here is our zip file'
+    return output_path 
 
 @app.route("/")
 def index():
@@ -35,9 +44,11 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     file = request.files["file"]
+    #need to have a unique identifier for the file so maybe file1[UUID].docx
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     ### maybe parse the so instead of file.docx.zip just file.zip
-    output_path = os.path.join(PROCESSED_FOLDER, f"processed_{file.filename}") 
+    #timestamp...
+    output_path = os.path.join(PROCESSED_FOLDER, f"processed_{file.filename}.zip") 
     file.save(file_path)
     task = process_docx.delay(file_path, output_path)
     return jsonify({"task_id": task.id})
